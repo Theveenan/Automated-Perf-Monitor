@@ -4,6 +4,7 @@ from airflow.operators.python import PythonOperator
 import subprocess
 
 
+import os
 
 
 default_args = {
@@ -22,8 +23,26 @@ def greet(name, ti):
     print(f"hello {name}! {followUp}")
 
 def start_logging():
-    command = 'logman start "Data Collector Set"'
-    subprocess.run(command, shell=True)
+    command = 'logman start "New Data Collector Set"'
+    print("starting logging")
+    
+    current = os.getcwd()
+    print("current:",current)
+    target_dir=(current+"/data")
+    print("target:",target_dir)
+
+    # Specify the file name you want to delete
+    file_to_delete = "delete.txt"
+
+    # Get the current script's directory
+    #current_dir = os.path.dirname(__file__)
+
+    # Navigate two levels up to reach the parent directory
+
+    # Construct the full path to the file
+    file_path = os.path.join(target_dir, file_to_delete)
+    os.remove(file_path)
+    #subprocess.run(command, shell=False)
 
 with DAG(
     default_args=default_args,
@@ -43,4 +62,9 @@ with DAG(
         python_callable = provide_question
     )
 
-    task2 >> task1
+    task3 = PythonOperator(
+        task_id = 'start_logging',
+        python_callable = start_logging
+    )
+
+    task2 >> task1 >> task3

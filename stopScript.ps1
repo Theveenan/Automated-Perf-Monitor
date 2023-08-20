@@ -1,0 +1,1 @@
+New-Item -Path "C:\Users\pc\Documents\GitHub\Automated-Perf-Monitor\Data\stop.txt" -ItemType File
