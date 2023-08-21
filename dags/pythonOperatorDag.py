@@ -9,7 +9,7 @@ import boto3
 
 default_args = {
     'owner': 'thev',
-    'retries': 2,
+    'retries': 1,
     'retry_delay': timedelta(seconds=30)
 }
 
@@ -22,9 +22,13 @@ def send_transformed_data(ti):
     bucket_name = 'perf-mon-data'
     current_datetime = datetime.now()
     for x in range(0, len(datas)):
-        # Get the path to the CSV file
-        output_filename = f'output_{x}.csv'
-        output_file_path = os.path.join(os.getcwd(), 'data', output_filename)
+
+        if(x==0):
+            output_filename = 'memory_data.csv'
+            output_file_path = os.path.join(os.getcwd(), 'data', 'output_0.csv')
+        else:
+            output_filename = 'processor_data.csv'
+            output_file_path = os.path.join(os.getcwd(), 'data', 'output_1.csv')
         
         # Specify the S3 object key (path)
         s3_object_key = f'data/{current_datetime}/{output_filename}'  
@@ -37,6 +41,19 @@ def send_transformed_data(ti):
 
 def delete_data():
     print('cleanup task starting')
+    file_paths = [
+        os.getcwd()+"/data/DESKTOP-67P0ISA_DataCollector01.csv",
+        os.getcwd()+"/data/output_0.csv",
+        os.getcwd()+"/data/output_1.csv"
+    ]
+    for file_path in file_paths:
+        try:
+            os.remove(file_path)
+            print(f"Deleted {file_path}")
+        except FileNotFoundError:
+            print(f"{file_path} not found, skipping...")
+        except Exception as e:
+            print(f"Error deleting {file_path}: {e}")
 
 
 def start_transforming():
@@ -67,10 +84,10 @@ def start_transforming():
 
 with DAG(
     default_args=default_args,
-    dag_id='my_first_python_dag',
-    description='my first dag using python operator',
-    start_date=datetime(2023, 8, 16),
-    schedule_interval=timedelta(minutes=1)
+    dag_id='perf-monitor-python-dag',
+    description='Python DAG for automated performance monitor',
+    start_date=datetime(2023, 8, 20, 11, 0, 0),
+    schedule_interval=timedelta(days=1)
 ) as dag:
     cleanup_data_task= PythonOperator(
         task_id='delete_data_task',
@@ -93,8 +110,8 @@ with DAG(
     wait_for_file_task = FileSensor(
         task_id='wait_for_file_task',
         filepath=target_dir,
-        poke_interval=5,
-        timeout=16,
+        poke_interval=3,
+        timeout=7,
         fs_conn_id='file_system',
         mode='poke'
     )
