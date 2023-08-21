@@ -6,6 +6,7 @@ import os
 import pandas as pd
 import numpy as np
 import boto3
+import pytz
 
 default_args = {
     'owner': 'thev',
@@ -20,7 +21,8 @@ def send_transformed_data(ti):
 
     s3_client = boto3.client('s3')
     bucket_name = 'perf-mon-data'
-    current_datetime = datetime.now()
+    desired_timezone = pytz.timezone('America/Toronto')
+    current_datetime = datetime.now(desired_timezone)
     for x in range(0, len(datas)):
 
         if(x==0):
